@@ -1,6 +1,8 @@
 package com.strongppl.tracker
 
-import android.app.DatePickerDialog\nimport androidx.compose.ui.platform.LocalContext\nimport android.content.Intent
+import android.app.DatePickerDialog
+import androidx.compose.ui.platform.LocalContext
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
