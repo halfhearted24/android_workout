@@ -1,6 +1,6 @@
 package com.strongppl.tracker
 
-import android.content.Intent
+import android.app.DatePickerDialog\nimport androidx.compose.ui.platform.LocalContext\nimport android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -119,10 +119,11 @@ private val Muted = Color(0xFF9AAAC0)
     val anchor by vm.anchor.collectAsState(); val day = WorkoutPlan.forDate(date); val week = WorkoutPlan.programmeWeek(date,anchor)
     MaterialTheme(colorScheme = darkColorScheme(primary=Color(0xFF8DB8FF), secondary=Color(0xFF75D6B1), background=Canvas, surface=Card)) {
         Scaffold(containerColor=Canvas, topBar={ TopAppBar(title={ Column { Text("STRONG PPL",fontWeight=FontWeight.Black); Text("12-week training log",style=MaterialTheme.typography.labelSmall,color=Muted) } }, colors=TopAppBarDefaults.topAppBarColors(containerColor=Canvas, titleContentColor=Color.White)) },
-            bottomBar={ NavigationBar(containerColor=Card) { listOf("Today","Plan","History","Insights","Backup").forEach { item -> NavigationBarItem(selected=tab==item,onClick={tab=item},icon={ Icon(when(item){"Today"->Icons.Default.FitnessCenter;"Plan"->Icons.Default.CalendarMonth;"History"->Icons.Default.History;"Insights"->Icons.Default.ShowChart;else->Icons.Default.Backup},contentDescription=item) },label={Text(item)}) } } }) { padding ->
+            bottomBar={ NavigationBar(containerColor=Card) { listOf("Today","Plan","Guides","History","Insights","Backup").forEach { item -> NavigationBarItem(selected=tab==item,onClick={tab=item},icon={ Icon(when(item){"Today"->Icons.Default.FitnessCenter;"Plan"->Icons.Default.CalendarMonth;"Guides"->Icons.Default.MenuBook;"History"->Icons.Default.History;"Insights"->Icons.Default.ShowChart;else->Icons.Default.Backup},contentDescription=item) },label={Text(item)}) } } }) { padding ->
             when(tab) {
                 "Today" -> TodayScreen(Modifier.padding(padding),date,week,day,logs,sessions,vm)
                 "Plan" -> PlanScreen(Modifier.padding(padding),date,week,onDate={vm.selectDate(it)})
+                "Guides" -> EvidenceScreen(Modifier.padding(padding))
                 "History" -> HistoryScreen(Modifier.padding(padding),sessions,logs)
                 "Insights" -> InsightsScreen(Modifier.padding(padding),logs,sessions)
                 else -> BackupScreen(Modifier.padding(padding),onExport,onImport)
@@ -134,8 +135,16 @@ private val Muted = Color(0xFF9AAAC0)
 @Composable private fun TodayScreen(mod:Modifier,date:LocalDate,week:Int,day:DayPlan,logs:List<SetLog>,sessions:List<WorkoutSession>,vm:TrackerViewModel) {
     val dateFmt=DateTimeFormatter.ofPattern("EEEE, d MMMM")
     LazyColumn(modifier=mod.fillMaxSize(),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
-        item { Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) { Column { Text(date.format(dateFmt),color=Muted); Text("Week $week of 12",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold,color=Color.White) }; AssistChip(onClick={vm.selectDate(LocalDate.now())},label={Text("Today")},leadingIcon={Icon(Icons.Default.Today,null)}) } }
-        item { CardBox { Column(verticalArrangement=Arrangement.spacedBy(6.dp)) { Text(if(day.isRest) "RECOVERY DAY" else "TODAY'S WORKOUT",color=Muted,style=MaterialTheme.typography.labelMedium); Text(day.title,style=MaterialTheme.typography.headlineLarge,fontWeight=FontWeight.Bold); Text(day.focus,color=Muted); Text(if(day.isRest) "Rest, walk gently and recover. Your training schedule never shifts." else "${day.exercises.size} exercises · about 45 minutes",color=Color(0xFF8DB8FF)) } } }
+        item { val context = LocalContext.current
+            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
+                Column { Text(date.format(dateFmt),color=Muted); Text("Week $week of 12",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold,color=Color.White) }
+                Row(horizontalArrangement=Arrangement.spacedBy(4.dp)) {
+                    AssistChip(onClick={vm.selectDate(LocalDate.now())},label={Text("Today")},leadingIcon={Icon(Icons.Default.Today,null)})
+                    IconButton(onClick={ DatePickerDialog(context, { _, y, m, d -> vm.selectDate(LocalDate.of(y,m+1,d)) }, date.year, date.monthValue-1, date.dayOfMonth).show() }) { Icon(Icons.Default.CalendarMonth, contentDescription="Choose date") }
+                }
+            }
+        }
+        item { CardBox { Column(verticalArrangement=Arrangement.spacedBy(6.dp)) { Text(if(day.isRest) "RECOVERY DAY" else "TODAY'S WORKOUT",color=Muted,style=MaterialTheme.typography.labelMedium); Text(day.title,style=MaterialTheme.typography.headlineLarge,fontWeight=FontWeight.Bold); Text(day.focus,color=Muted); Text(if(day.isRest) "Rest, walk gently and recover. Your training schedule never shifts." else "${day.exercises.size} exercises · target 30–40 minutes",color=Color(0xFF8DB8FF)) } } }
         if(day.isRest) item { CardBox { Text("Sunday is always rest. Monday starts the next training week.",color=Color.White) } }
         items(day.exercises,key={it.id}) { ex ->
             val exerciseLogs=logs.filter { it.date==date.toString() && it.exerciseId==ex.id }.associateBy { it.setNumber }
