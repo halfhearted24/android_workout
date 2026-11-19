@@ -141,14 +141,14 @@ private val Muted = Color(0xFF9AAAC0)
             val exerciseLogs=logs.filter { it.date==date.toString() && it.exerciseId==ex.id }.associateBy { it.setNumber }
             var previous by remember(ex.id,date) { mutableStateOf<List<SetLog>>(emptyList()) }
             LaunchedEffect(ex.id,date) { previous=vm.previous(ex.id,date) }
-            ExerciseCard(ex,exerciseLogs,previous) { n,r,w,rir,band -> vm.saveSet(date,ex,n,r,w,rir,band) }
+            ExerciseCard(ex,exerciseLogs,previous,date) { n,r,w,rir,band -> vm.saveSet(date,ex,n,r,w,rir,band) } 
         }
         if(!day.isRest) item { Button(onClick={vm.complete(date)},modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(16.dp)) { Icon(Icons.Default.CheckCircle,null); Spacer(Modifier.width(8.dp)); Text(if(sessions.any{it.date==date.toString()&&it.status=="COMPLETED"}) "Workout completed ✓" else "Finish workout") } }
         item { Text("Calendar is fixed by weekday. Missing a session never moves another workout.",color=Muted,style=MaterialTheme.typography.bodySmall) }
     }
 }
 
-@Composable private fun ExerciseCard(ex:ExercisePlan,logs:Map<Int,SetLog>,previous:List<SetLog>,onSave:(Int,String,String,String,String)->Unit) {
+@Composable private fun ExerciseCard(ex:ExercisePlan,logs:Map<Int,SetLog>,previous:List<SetLog>,date:LocalDate,onSave:(Int,String,String,String,String)->Unit) {
     CardBox {
         Column(verticalArrangement=Arrangement.spacedBy(10.dp)) {
             Text(ex.name,style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.Bold,color=Color.White)
